@@ -1,0 +1,17 @@
+[project]
+name = "schematized-jwt"
+version = "0.0.1"
+description = "A project for encoding and decoding JWT tokens using Pydantic schemas."
+readme = "README.md"
+authors = [
+    { name = "Vladimir Boltushev", email = "vladimirboltushev@yandex.ru" }
+]
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+schematized-jwt = "schematized_jwt:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
