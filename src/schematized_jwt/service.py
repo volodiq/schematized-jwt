@@ -6,8 +6,8 @@ from typing import Annotated, Generic, Literal, TypeVar
 import jwt
 from pydantic import ValidationError
 
-from . import exceptions as exc
-from .schemas import JWTSchema
+from schematized_jwt import exceptions as exc
+from schematized_jwt.schemas import JWTSchema
 
 TS = TypeVar("TS", bound=JWTSchema)
 type JWTEncodeAlgorithm = Literal["ES256", "HS256", "RS256", "PS256"]
