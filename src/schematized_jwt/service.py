@@ -23,7 +23,7 @@ class TokenType(StrEnum):
     REFRESH = "refresh"
 
 
-class PayloadBuilder(Generic[TS]):
+class PayloadBuilder:
     def __init__(
         self,
         access_ttl: TokenTTL,
@@ -47,7 +47,7 @@ class PayloadBuilder(Generic[TS]):
 
     def payload_build(
         self,
-        payload: TS,
+        payload: JWTSchema,
         token_type: TokenType,
     ) -> dict:
         payload_with_tech_data = payload.model_dump()
@@ -62,7 +62,7 @@ class PayloadBuilder(Generic[TS]):
         return payload_with_tech_data
 
 
-class JWTEncoder(Generic[TS]):
+class JWTEncoder:
     def __init__(
         self,
         payload_builder: PayloadBuilder,
@@ -84,10 +84,10 @@ class JWTEncoder(Generic[TS]):
             algorithm=self.algorithm,
         )
 
-    def encode_access(self, payload: TS) -> JWTToken:
+    def encode_access(self, payload: JWTSchema) -> JWTToken:
         return self._base_encode(payload=payload, token_type=TokenType.ACCESS)
 
-    def encode_refresh(self, payload: TS) -> JWTToken:
+    def encode_refresh(self, payload: JWTSchema) -> JWTToken:
         return self._base_encode(payload=payload, token_type=TokenType.REFRESH)
 
 
@@ -138,4 +138,4 @@ class BaseJWTService(Generic[TS]):
 
     @classmethod
     def encode_refresh(cls, payload: TS) -> JWTToken:
-        return cls.get_jwt_encoder().encode_access(payload)
+        return cls.get_jwt_encoder().encode_refresh(payload)
