@@ -19,6 +19,6 @@ class PhoneJWTService(BaseJWTService[PhoneJWTSchema]):
     secret_key = config.secret_key
 
 
-phone_jwt_access = PhoneJWTService.encode_access(JWTSchema(sub=uuid.uuid4().hex, phone="+123123123"))
+phone_jwt_access = PhoneJWTService.encode_access(PhoneJWTSchema(sub=uuid.uuid4().hex, phone="+123123123"))
 phone_jwt_decoded = PhoneJWTService.decode_access(access)
 ```
