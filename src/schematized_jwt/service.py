@@ -5,6 +5,7 @@ from typing import Annotated, Generic, Literal, TypeVar
 
 import jwt
 
+from . import exceptions as exc
 from .schemas import JWTSchema
 
 TS = TypeVar("TS", bound=JWTSchema)
@@ -108,6 +109,32 @@ class JWTDecoder:
         )
 
 
+class PayloadValidator:
+    def __init__(
+        self,
+        access_ttl: TokenTTL,
+        refresh_ttl: TokenTTL,
+    ) -> None:
+        self.access_ttl = access_ttl
+        self.refresh_ttl = refresh_ttl
+
+    def _validate_ttl(self, payload: dict) -> None:
+        exp = payload.get("exp")
+        if exp:
+            now = int(time.time())
+            if now > exp:
+                raise exc.JWTExpiredError
+
+    def _validate_type(self, payload: dict, token_type: TokenType) -> None:
+        payload_token_type = payload.get("type")
+        if payload_token_type != token_type:
+            raise exc.JWTInvalidTokenType
+
+    def validate(self, payload: dict, token_type: TokenType) -> None:
+        self._validate_ttl(payload)
+        self._validate_type(payload=payload, token_type=token_type)
+
+
 class BaseJWTService(Generic[TS]):
     """
     Base JWT service class that provides common JWT functionality.
@@ -121,7 +148,7 @@ class BaseJWTService(Generic[TS]):
 
     # TODO: Add usage example to docstrings.
 
-    token_schema: type[TS]
+    token_schema: type[TS]  # TODO Rename to payload_schema
 
     # Base configuration
     secret_key: Annotated[
@@ -157,6 +184,13 @@ class BaseJWTService(Generic[TS]):
         )
 
     @classmethod
+    def get_payload_validator(cls) -> PayloadValidator:
+        return PayloadValidator(
+            access_ttl=cls.access_ttl,
+            refresh_ttl=cls.refresh_ttl,
+        )
+
+    @classmethod
     def encode_access(cls, payload: TS) -> JWTToken:
         return cls.get_jwt_encoder().encode_access(payload)
 
@@ -168,12 +202,12 @@ class BaseJWTService(Generic[TS]):
     def decode_access(cls, token: JWTToken) -> TS:
         payload = cls.get_jwt_decoder().decode(token)
         # TODO Add try except
-        # TODO Add validate token payload
-        return cls.token_schema.model_validate(payload)
+        cls.get_payload_validator().validate(payload, token_type=TokenType.ACCESS)
+        return cls.token_schema.model_validate(payload)  # Can be invalid payload
 
     @classmethod
     def decode_refresh(cls, token: JWTToken) -> TS:
         payload = cls.get_jwt_decoder().decode(token)
         # TODO Add try except
-        # TODO Add validate token payload
-        return cls.token_schema.model_validate(payload)
+        cls.get_payload_validator().validate(payload, token_type=TokenType.REFRESH)
+        return cls.token_schema.model_validate(payload)  # Can be invalid payload
