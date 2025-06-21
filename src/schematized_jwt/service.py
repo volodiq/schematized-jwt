@@ -4,6 +4,7 @@ from enum import StrEnum
 from typing import Annotated, Generic, Literal, TypeVar
 
 import jwt
+from pydantic import ValidationError
 
 from . import exceptions as exc
 from .schemas import JWTSchema
@@ -203,11 +204,19 @@ class BaseJWTService(Generic[TS]):
         payload = cls.get_jwt_decoder().decode(token)
         # TODO Add try except
         cls.get_payload_validator().validate(payload, token_type=TokenType.ACCESS)
-        return cls.token_schema.model_validate(payload)  # Can be invalid payload
+
+        try:
+            return cls.token_schema.model_validate(payload)
+        except ValidationError as e:
+            raise exc.JWTInvalidPayloadError from e
 
     @classmethod
     def decode_refresh(cls, token: JWTToken) -> TS:
         payload = cls.get_jwt_decoder().decode(token)
         # TODO Add try except
         cls.get_payload_validator().validate(payload, token_type=TokenType.REFRESH)
-        return cls.token_schema.model_validate(payload)  # Can be invalid payload
+
+        try:
+            return cls.token_schema.model_validate(payload)
+        except ValidationError as e:
+            raise exc.JWTInvalidPayloadError from e
