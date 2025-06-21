@@ -75,7 +75,7 @@ class JWTEncoder:
         self.secret_key = secret_key
         self.algorithm = algorithm
 
-    def _base_encode(self, payload, token_type: TokenType) -> JWTToken:
+    def _base_encode(self, payload: JWTSchema, token_type: TokenType) -> JWTToken:
         payload_with_tech_data = self.payload_builder.payload_build(
             payload=payload,
             token_type=token_type,
@@ -132,7 +132,7 @@ class BaseJWTService(Generic[TS]):
     Usage example:
     ```
     class JWTService(BaseJWTService[JWTSchema]):
-        token_schema = JWTSchema
+        payload_schema = JWTSchema
         secret_key = config.secret_key
 
 
@@ -141,9 +141,7 @@ class BaseJWTService(Generic[TS]):
     ```
     """
 
-    # TODO: Add usage example to docstrings.
-
-    token_schema: type[TS]  # TODO Rename to payload_schema
+    payload_schema: type[TS]
 
     # Base configuration
     secret_key: Annotated[
@@ -202,7 +200,7 @@ class BaseJWTService(Generic[TS]):
         cls.get_payload_validator().validate(payload, token_type=token_type)
 
         try:
-            return cls.token_schema.model_validate(payload)
+            return cls.payload_schema.model_validate(payload)
         except ValidationError as e:
             raise exc.JWTInvalidPayloadError from e
 
