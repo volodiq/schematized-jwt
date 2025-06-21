@@ -191,29 +191,25 @@ class BaseJWTService(Generic[TS]):
         return cls.get_jwt_encoder().encode_refresh(payload)
 
     @classmethod
-    def decode_access(cls, token: JWTToken) -> TS:
+    def _decode_token(cls, token: JWTToken, token_type: TokenType) -> TS:
         try:
             payload = cls.get_jwt_decoder().decode(token)
         except jwt.ExpiredSignatureError:
             raise exc.JWTExpiredError
         except jwt.PyJWTError:
             raise exc.JWTInvalidError
-        cls.get_payload_validator().validate(payload, token_type=TokenType.ACCESS)
+
+        cls.get_payload_validator().validate(payload, token_type=token_type)
+
         try:
             return cls.token_schema.model_validate(payload)
         except ValidationError as e:
             raise exc.JWTInvalidPayloadError from e
 
     @classmethod
+    def decode_access(cls, token: JWTToken) -> TS:
+        return cls._decode_token(token, TokenType.ACCESS)
+
+    @classmethod
     def decode_refresh(cls, token: JWTToken) -> TS:
-        try:
-            payload = cls.get_jwt_decoder().decode(token)
-        except jwt.ExpiredSignatureError:
-            raise exc.JWTExpiredError
-        except jwt.PyJWTError:
-            raise exc.JWTInvalidError
-        cls.get_payload_validator().validate(payload, token_type=TokenType.REFRESH)
-        try:
-            return cls.token_schema.model_validate(payload)
-        except ValidationError as e:
-            raise exc.JWTInvalidPayloadError from e
+        return cls._decode_token(token, TokenType.REFRESH)
