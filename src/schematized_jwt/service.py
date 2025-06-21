@@ -91,6 +91,23 @@ class JWTEncoder:
         return self._base_encode(payload=payload, token_type=TokenType.REFRESH)
 
 
+class JWTDecoder:
+    def __init__(
+        self,
+        secret_key: str,
+        algorithm: JWTEncodeAlgorithm,
+    ) -> None:
+        self.secret_key = secret_key
+        self.algorithm = algorithm
+
+    def decode(self, token: JWTToken) -> dict:
+        return jwt.decode(
+            jwt=token,
+            key=self.secret_key,
+            algorithms=self.algorithm,
+        )
+
+
 class BaseJWTService(Generic[TS]):
     """
     Base JWT service class that provides common JWT functionality.
@@ -133,9 +150,30 @@ class BaseJWTService(Generic[TS]):
         )
 
     @classmethod
+    def get_jwt_decoder(cls) -> JWTDecoder:
+        return JWTDecoder(
+            secret_key=cls.secret_key,
+            algorithm=cls.algorithm,
+        )
+
+    @classmethod
     def encode_access(cls, payload: TS) -> JWTToken:
         return cls.get_jwt_encoder().encode_access(payload)
 
     @classmethod
     def encode_refresh(cls, payload: TS) -> JWTToken:
         return cls.get_jwt_encoder().encode_refresh(payload)
+
+    @classmethod
+    def decode_access(cls, token: JWTToken) -> TS:
+        payload = cls.get_jwt_decoder().decode(token)
+        # TODO Add try except
+        # TODO Add validate token payload
+        return cls.token_schema.model_validate(payload)
+
+    @classmethod
+    def decode_refresh(cls, token: JWTToken) -> TS:
+        payload = cls.get_jwt_decoder().decode(token)
+        # TODO Add try except
+        # TODO Add validate token payload
+        return cls.token_schema.model_validate(payload)
