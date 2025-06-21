@@ -2,6 +2,10 @@ class SchematizedJWTError(Exception):
     """Any errors while working with JWT."""
 
 
+class JWTInvalidError(SchematizedJWTError):
+    """Token is invalid."""
+
+
 class JWTInvalidPayloadError(SchematizedJWTError):
     """Specified schema for JWT and payload does not match."""
 

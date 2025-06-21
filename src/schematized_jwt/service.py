@@ -107,33 +107,20 @@ class JWTDecoder:
             jwt=token,
             key=self.secret_key,
             algorithms=self.algorithm,
+            options={"verify_exp": True},
         )
 
 
 class PayloadValidator:
-    def __init__(
-        self,
-        access_ttl: TokenTTL,
-        refresh_ttl: TokenTTL,
-    ) -> None:
-        self.access_ttl = access_ttl
-        self.refresh_ttl = refresh_ttl
-
-    def _validate_ttl(self, payload: dict) -> None:
-        exp = payload.get("exp")
-        if exp:
-            now = int(time.time())
-            if now > exp:
-                raise exc.JWTExpiredError
-
-    def _validate_type(self, payload: dict, token_type: TokenType) -> None:
+    @classmethod
+    def _validate_type(cls, payload: dict, token_type: TokenType) -> None:
         payload_token_type = payload.get("type")
         if payload_token_type != token_type:
             raise exc.JWTInvalidTokenType
 
-    def validate(self, payload: dict, token_type: TokenType) -> None:
-        self._validate_ttl(payload)
-        self._validate_type(payload=payload, token_type=token_type)
+    @classmethod
+    def validate(cls, payload: dict, token_type: TokenType) -> None:
+        cls._validate_type(payload=payload, token_type=token_type)
 
 
 class BaseJWTService(Generic[TS]):
@@ -144,6 +131,13 @@ class BaseJWTService(Generic[TS]):
 
     Usage example:
     ```
+    class JWTService(BaseJWTService[JWTSchema]):
+        token_schema = JWTSchema
+        secret_key = config.secret_key
+
+
+    access = JWTService.encode_access(JWTSchema(sub=uuid.uuid4().hex))
+    decoded = JWTService.decode_access(access)
     ```
     """
 
@@ -185,11 +179,8 @@ class BaseJWTService(Generic[TS]):
         )
 
     @classmethod
-    def get_payload_validator(cls) -> PayloadValidator:
-        return PayloadValidator(
-            access_ttl=cls.access_ttl,
-            refresh_ttl=cls.refresh_ttl,
-        )
+    def get_payload_validator(cls) -> type[PayloadValidator]:
+        return PayloadValidator
 
     @classmethod
     def encode_access(cls, payload: TS) -> JWTToken:
@@ -201,10 +192,13 @@ class BaseJWTService(Generic[TS]):
 
     @classmethod
     def decode_access(cls, token: JWTToken) -> TS:
-        payload = cls.get_jwt_decoder().decode(token)
-        # TODO Add try except
+        try:
+            payload = cls.get_jwt_decoder().decode(token)
+        except jwt.ExpiredSignatureError:
+            raise exc.JWTExpiredError
+        except jwt.PyJWTError:
+            raise exc.JWTInvalidError
         cls.get_payload_validator().validate(payload, token_type=TokenType.ACCESS)
-
         try:
             return cls.token_schema.model_validate(payload)
         except ValidationError as e:
@@ -212,10 +206,13 @@ class BaseJWTService(Generic[TS]):
 
     @classmethod
     def decode_refresh(cls, token: JWTToken) -> TS:
-        payload = cls.get_jwt_decoder().decode(token)
-        # TODO Add try except
+        try:
+            payload = cls.get_jwt_decoder().decode(token)
+        except jwt.ExpiredSignatureError:
+            raise exc.JWTExpiredError
+        except jwt.PyJWTError:
+            raise exc.JWTInvalidError
         cls.get_payload_validator().validate(payload, token_type=TokenType.REFRESH)
-
         try:
             return cls.token_schema.model_validate(payload)
         except ValidationError as e:
