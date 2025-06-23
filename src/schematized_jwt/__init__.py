@@ -1,3 +1,3 @@
-from schematized_jwt import exceptions, schemas, service
+from schematized_jwt import service
 
-__all__ = ("exceptions", "service", "schemas")
+__all__ = ("service",)
