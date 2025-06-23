@@ -6,8 +6,16 @@ from schematized_jwt.annotations import JWTEncodeAlgorithm, JWTToken
 from schematized_jwt.decoders import BaseJWTDecoder, PyJWTDecoder
 from schematized_jwt.encoders import BaseJWTEncoder, PyJWTEncoder
 from schematized_jwt.enums import TokenType
-from schematized_jwt.extenders import BaseJWTPayloadExtender, TTLPayloadExtender
-from schematized_jwt.validators import BaseJWTPayloadValidator, TTLPayloadValidator
+from schematized_jwt.extenders import (
+    BaseJWTPayloadExtender,
+    TTLPayloadExtender,
+    TypePayloadExtender,
+)
+from schematized_jwt.validators import (
+    BaseJWTPayloadValidator,
+    TTLPayloadValidator,
+    TypePayloadValidator,
+)
 
 APP = ParamSpec("APP")
 APM = TypeVar("APM")
@@ -42,6 +50,8 @@ class BaseJWTService(Generic[APP, APM, RPM, RPP]):
         token_decoder: type[BaseJWTDecoder] = PyJWTDecoder,
         token_encoder: type[BaseJWTEncoder] = PyJWTEncoder,
         payload_extenders: Iterable[BaseJWTPayloadExtender] = (
+            TypePayloadExtender(token_type=TokenType.ACCESS),
+            TypePayloadExtender(token_type=TokenType.REFRESH),
             TTLPayloadExtender(
                 token_ttl=datetime.timedelta(minutes=15), token_type=TokenType.ACCESS
             ),
@@ -50,6 +60,8 @@ class BaseJWTService(Generic[APP, APM, RPM, RPP]):
             ),
         ),
         payload_validators: Iterable[BaseJWTPayloadValidator] = (
+            TypePayloadValidator(token_type=TokenType.ACCESS),
+            TypePayloadValidator(token_type=TokenType.REFRESH),
             TTLPayloadValidator(
                 token_ttl=datetime.timedelta(minutes=15), token_type=TokenType.ACCESS
             ),

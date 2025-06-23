@@ -31,5 +31,9 @@ class JWTValidationExpiredError(JWTValidationError):
     """TTL of JWT has been expired."""
 
 
+class JWTValidationMismatchTokenTypeError(JWTValidationError):
+    """Token type (access, refresh) in payload mismatch."""
+
+
 # class JWTInvalidTokenType(JWTValidationError):
 #     """The type of JWT in the payload does not match."""
