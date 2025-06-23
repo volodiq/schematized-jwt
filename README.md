@@ -8,11 +8,17 @@ from schematized_jwt import BaseJWTService
 
 
 class AccessPayload(BaseModel):
+    """
+    Access token payload (does not include exp, iat and other service fields)
+    """
     oid: str
     name: str
 
 
 class RefreshPayload(BaseModel):
+    """
+    Refresh token payload (does not include exp, iat and other service fields)
+    """
     oid: str
 
 
@@ -23,15 +29,15 @@ JWTService = BaseJWTService(
 )
 
 # Access
-access = JWTService.encode_access(oid="123", name="Bobr")
+access = JWTService.encode_access(oid="123", name="Bobr") # There's an auto-complement from the IDE and a type checker!
 print(f"{access=}")
-decoded_a = JWTService.decode_access(access)
+decoded_a = JWTService.decode_access(access) # Here you get a payload in the form of a previously specified payload schema for access tokens!
 print(f"{decoded_a=}")
 
 
 # Refresh
-refresh = JWTService.encode_refresh(oid="123")
+refresh = JWTService.encode_refresh(oid="123") # There's an auto-complement from the IDE and a type checker!
 print(f"{refresh=}")
-decoded_r = JWTService.decode_refresh(refresh)
+decoded_r = JWTService.decode_refresh(refresh) # Here you get a payload in the form of a previously specified schema for refresh tokens!
 print(f"{decoded_r=}")
 ```
