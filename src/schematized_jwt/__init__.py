@@ -1,3 +1,3 @@
-from schematized_jwt import service
+from schematized_jwt.main import BaseJWTService
 
-__all__ = ("service",)
+__all__ = ("BaseJWTService",)

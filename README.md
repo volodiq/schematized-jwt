@@ -2,32 +2,36 @@ A project for encoding and decoding JWT tokens using Pydantic schemas.
 
 # Usage example:
 ```python
+from pydantic import BaseModel
 
-# Service for JWT only with sub
-class JWTService(BaseJWTService):
-    class TokenPayload(BaseJWTService):
-        """
-        Describes the payload of access token (not including technical
-        details such as exp, aud, iat, and others).
-        """
-        sub: str
-
-    secret_key = config.secret_key
-
-access = JWTService.encode_access(JWTService.TokenPayload(sub=uuid.uuid4().hex))
-decoded: JWTService.TokenPayload = JWTService.decode_access(access)
-
-# Another service, with sub and phone in payload
-class PhoneJWTService(BaseJWTService):
-    class TokenPayload(BaseJWTService):
-        sub: str
-        phone: str
-        # Everything works as for the usual Pydantic
-        # model - e.g you can use PhoneNumber from  pydantic_extra_types.phone_numbers
+from schematized_jwt import BaseJWTService
 
 
-    secret_key = config.secret_key
+class AccessPayload(BaseModel):
+    oid: str
+    name: str
 
-access = PhoneJWTService.encode_access(PhoneJWTService.TokenPayload(sub=uuid.uuid4().hex, phone="+123124123"))
-decoded: PhoneJWTService.TokenPayload = PhoneJWTService.decode_access(access)
+
+class RefreshPayload(BaseModel):
+    oid: str
+
+
+JWTService = BaseJWTService(
+    access_payload=AccessPayload,
+    refresh_payload=RefreshPayload,
+    secret_key="your_strong_secret",
+)
+
+# Access
+access = JWTService.encode_access(oid="123", name="Bobr")
+print(f"{access=}")
+decoded_a = JWTService.decode_access(access)
+print(f"{decoded_a=}")
+
+
+# Refresh
+refresh = JWTService.encode_refresh(oid="123")
+print(f"{refresh=}")
+decoded_r = JWTService.decode_refresh(refresh)
+print(f"{decoded_r=}")
 ```
