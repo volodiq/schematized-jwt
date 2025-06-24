@@ -1,6 +1,12 @@
 A project for encoding and decoding JWT tokens using Pydantic schemas.
+### Install
+```
+pip install schematized-jwt
+uv add schematized-jwt
+poetry add schematized-jwt
+```
 
-# Usage example:
+### Usage example:
 ```python
 from pydantic import BaseModel
 
